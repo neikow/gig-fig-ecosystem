@@ -333,7 +333,7 @@ int main() {
     double timeAccum = 0.0;
     const int maxStepsPerFrame = 100;
 
-    SimulationSettings config;
+    SimulationSettings config{};
     config.gridWidth = 40;
     config.gridHeight = 40;
 
@@ -342,6 +342,7 @@ int main() {
         .maxEnergy = 30.0f,
         .reproductionCooldown = 10,
         .reproductionChance = 0.1f,
+        .spontaneousReproductionChance = 0.001f,
         .hungerDamage = 0.0f,
         .maxAge = 500,
     };
@@ -378,11 +379,40 @@ int main() {
 
     int prevGridHeight = config.gridHeight, prevGridWidth = config.gridWidth;
 
+
+    static SimulationSettings uiPending = config;
+    static bool uiPendingDirty;
+
     GLuint gridTex = createGridTexture(config.gridWidth, config.gridHeight);
     std::vector<uint32_t> gridColors(config.gridWidth * config.gridHeight, packRGBA(0, 0, 0, 255));
     updateGridTexture(gridTex, config.gridWidth, config.gridHeight, gridColors);
 
     auto sim = createEcosystemSimulation(config);
+
+    auto applyPendingConfig = [&](bool forceRecreate = false) {
+        // If grid size changed we must recreate texture and simulation
+        const bool gridSizeChanged = (uiPending.gridWidth != prevGridWidth) || (uiPending.gridHeight != prevGridHeight);
+        if (gridSizeChanged || forceRecreate) {
+            prevGridWidth = uiPending.gridWidth;
+            prevGridHeight = uiPending.gridHeight;
+
+            if (gridTex) {
+                glDeleteTextures(1, &gridTex);
+                gridTex = 0;
+            }
+
+            gridTex = createGridTexture(uiPending.gridWidth, uiPending.gridHeight);
+            gridColors.assign(uiPending.gridWidth * uiPending.gridHeight, packRGBA(0, 0, 0, 255));
+            updateGridTexture(gridTex, uiPending.gridWidth, uiPending.gridHeight, gridColors);
+
+            sim = createEcosystemSimulation(uiPending);
+        } else {
+            // grid size unchanged: recreate sim to pick up changed counts/traits (simple, safe)
+            sim = createEcosystemSimulation(uiPending);
+        }
+
+        uiPendingDirty = false;
+    };
 
     while (!glfwWindowShouldClose(window)) {
         glfwPollEvents();
@@ -404,8 +434,91 @@ int main() {
         {
             ImGui::Begin("World Settings");
 
-            ImGui::SliderInt("Height", &config.gridHeight, 10, 320);
-            ImGui::SliderInt("Width", &config.gridWidth, 10, 320);
+            if (ImGui::InputInt("Width", &uiPending.gridWidth)) uiPendingDirty = true;
+            if (ImGui::InputInt("Height", &uiPending.gridHeight)) uiPendingDirty = true;
+            uiPending.gridWidth = clamp(uiPending.gridWidth, 10, 320);
+            uiPending.gridHeight = clamp(uiPending.gridHeight, 10, 320);
+
+            ImGui::Separator();
+
+            if (ImGui::CollapsingHeader("Entities Counts")) {
+                if (ImGui::InputInt("Grass", &uiPending.grassCount)) uiPendingDirty = true;
+                if (ImGui::InputInt("Rabbit", &uiPending.rabbitCount)) uiPendingDirty = true;
+                if (ImGui::InputInt("Wolf", &uiPending.wolfCount)) uiPendingDirty = true;
+            }
+
+            ImGui::Separator();
+
+            if (ImGui::CollapsingHeader("Grass Traits")) {
+                ImGui::DragFloat("maxEnergy", &uiPending.grassTraits.maxEnergy, 1.0f, 0.0f, 10000.0f);
+                ImGui::DragInt("reproductionCooldown", &uiPending.grassTraits.reproductionCooldown, 1, 0, 10000);
+                ImGui::DragFloat("reproductionChance", &uiPending.grassTraits.reproductionChance, 0.01f, 0.0f,
+                                 1.0f);
+                ImGui::DragFloat("spontaneousReproductionChance", &uiPending.grassTraits.spontaneousReproductionChance,
+                                 0.0001f, 0.0f, 0.1f);
+                ImGui::DragFloat("hungerDamage", &uiPending.grassTraits.hungerDamage, 0.1f, 0.0f, 1000.0f);
+                ImGui::DragInt("maxAge", &uiPending.grassTraits.maxAge, 1, 0, 100000);
+                uiPendingDirty = uiPendingDirty || ImGui::IsItemEdited();
+            }
+            if (ImGui::CollapsingHeader("Rabbit Traits")) {
+                ImGui::DragFloat("maxEnergy", &uiPending.rabbitTraits.maxEnergy, 1.0f, 0.0f, 10000.0f);
+                ImGui::DragFloat("movementEnergyCost", &uiPending.rabbitTraits.movementEnergyCost, 0.1f, 0.0f,
+                                 1000.0f);
+                ImGui::DragFloat("reproductionThreshold", &uiPending.rabbitTraits.reproductionThreshold, 1.0f,
+                                 0.0f, 10000.0f);
+                ImGui::DragInt("reproductionCooldown", &uiPending.rabbitTraits.reproductionCooldown, 1, 0,
+                               100000);
+                ImGui::DragFloat("reproductionChance", &uiPending.rabbitTraits.reproductionChance, 0.01f, 0.0f,
+                                 1.0f);
+                ImGui::DragFloat("reproductionEnergyCost", &uiPending.rabbitTraits.reproductionEnergyCost, 1.0f,
+                                 0.0f, 10000.0f);
+                ImGui::DragFloat("visionRange", &uiPending.rabbitTraits.visionRange, 0.5f, 0.0f, 100.0f);
+                ImGui::DragFloat("fleeingRange", &uiPending.rabbitTraits.fleeingRange, 0.5f, 0.0f, 100.0f);
+                ImGui::DragFloat("hungerDamage", &uiPending.rabbitTraits.hungerDamage, 0.1f, 0.0f, 1000.0f);
+                ImGui::DragFloat("feedingThreshold", &uiPending.rabbitTraits.feedingThreshold, 1.0f, 0.0f,
+                                 10000.0f);
+                ImGui::DragInt("maxAge", &uiPending.rabbitTraits.maxAge, 1, 0, 100000);
+                uiPendingDirty = uiPendingDirty || ImGui::IsItemEdited();
+            }
+            if (ImGui::CollapsingHeader("Wolf Traits")) {
+                ImGui::DragFloat("maxEnergy", &uiPending.wolfTraits.maxEnergy, 1.0f, 0.0f, 10000.0f);
+                ImGui::DragFloat("movementEnergyCost", &uiPending.wolfTraits.movementEnergyCost, 0.1f, 0.0f,
+                                 1000.0f);
+                ImGui::DragFloat("reproductionThreshold", &uiPending.wolfTraits.reproductionThreshold, 1.0f, 0.0f,
+                                 10000.0f);
+                ImGui::DragInt("reproductionCooldown", &uiPending.wolfTraits.reproductionCooldown, 1, 0, 100000);
+                ImGui::DragFloat("reproductionChance", &uiPending.wolfTraits.reproductionChance, 0.01f, 0.0f,
+                                 1.0f);
+                ImGui::DragFloat("reproductionEnergyCost", &uiPending.wolfTraits.reproductionEnergyCost, 1.0f,
+                                 0.0f, 10000.0f);
+                ImGui::DragFloat("visionRange", &uiPending.wolfTraits.visionRange, 0.5f, 0.0f, 100.0f);
+                ImGui::DragFloat("hungerDamage", &uiPending.wolfTraits.hungerDamage, 0.1f, 0.0f, 1000.0f);
+                ImGui::DragFloat("feedingThreshold", &uiPending.wolfTraits.feedingThreshold, 1.0f, 0.0f, 10000.0f);
+                ImGui::DragInt("maxAge", &uiPending.wolfTraits.maxAge, 1, 0, 100000);
+                uiPendingDirty = uiPendingDirty || ImGui::IsItemEdited();
+            }
+
+            ImGui::Spacing();
+
+            if (ImGui::Button("Apply")) {
+                applyPendingConfig();
+                config = uiPending;
+            }
+            ImGui::SameLine();
+            if (ImGui::Button("Reset")) {
+                uiPending = config;
+                uiPendingDirty = false;
+            }
+            ImGui::SameLine();
+            if (ImGui::Button("Recreate Now")) {
+                applyPendingConfig(true);
+                config = uiPending;
+            }
+
+            if (uiPendingDirty) {
+                ImGui::TextColored(ImVec4(1, 0.7f, 0, 1), "Unsaved changes");
+            }
+
             ImGui::End();
         }
 
@@ -445,7 +558,9 @@ int main() {
         lastTime = now;
         timeAccum += delta;
 
-        double stepInterval = (stepsPerSecond > 0 && !pauseSim) ? (1.0 / static_cast<double>(stepsPerSecond)) : 1.0e9;
+        double stepInterval = (stepsPerSecond > 0 && !pauseSim)
+                                  ? (1.0 / static_cast<double>(stepsPerSecond))
+                                  : 1.0e9;
         int stepsThisFrame = 0;
         while (timeAccum >= stepInterval && stepsThisFrame < maxStepsPerFrame) {
             sim->step();

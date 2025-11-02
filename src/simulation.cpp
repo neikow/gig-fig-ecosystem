@@ -188,7 +188,7 @@ glm::ivec2 randomPosition(const int gridWidth, const int gridHeight) {
     static std::mt19937 rng(std::random_device{}());
     std::uniform_int_distribution distX(0, gridWidth - 1);
     std::uniform_int_distribution distY(0, gridHeight - 1);
-    return glm::ivec2(distX(rng), distY(rng));
+    return {distX(rng), distY(rng)};
 }
 
 std::unique_ptr<ISimulation> createEcosystemSimulation(SimulationSettings config) {

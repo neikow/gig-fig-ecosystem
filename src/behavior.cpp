@@ -17,6 +17,22 @@ int dY[] = {0, 1, 1, 1, 0, -1, -1, -1};
 
 int DIRS = 8;
 
+static int randomDirOffset() {
+    return std::uniform_int_distribution(0, DIRS - 1)(getRng());
+}
+
+static float probability() {
+    return std::uniform_real_distribution<float>(0.0f, 1.0f)(getRng());
+}
+
+static int randomDirection() {
+    return std::uniform_int_distribution<int>(-1, 1)(getRng());
+}
+
+static int randomRangeInt(const int minVal, const int maxVal) {
+    return std::uniform_int_distribution(minVal, maxVal)(getRng());
+}
+
 class PlantBehavior final : public IBehavior {
     using IBehavior::IBehavior;
 
@@ -26,6 +42,16 @@ class PlantBehavior final : public IBehavior {
         const std::vector<GridCell> &grid,
         std::vector<SpawnRequest> &spawnRequests
     ) const {
+        if (probability() < traits.spontaneousReproductionChance) {
+            const SpawnRequest request{
+                .type = EntityType::Plant,
+                .speciesId = entity.speciesId,
+                .x = randomRangeInt(0, gridWidth - 1),
+                .y = randomRangeInt(0, gridHeight - 1),
+            };
+            spawnRequests.push_back(request);
+        }
+
         if (entity.age % traits.reproductionCooldown == 0) {
             for (int dir = 0; dir < DIRS; dir++) {
                 const int dx = dX[dir];
@@ -36,14 +62,15 @@ class PlantBehavior final : public IBehavior {
 
                 if (!insideBounds(newX, newY)) continue;
 
-                float r = static_cast<float>(rand()) / static_cast<float>(RAND_MAX);
+                const float p = probability();
 
-                if (grid[newY * gridWidth + newX].plantIndex == -1 && r < traits.reproductionChance) {
-                    SpawnRequest request;
-                    request.type = EntityType::Plant;
-                    request.speciesId = entity.speciesId;
-                    request.x = newX;
-                    request.y = newY;
+                if (grid[newY * gridWidth + newX].plantIndex == -1 && p < traits.reproductionChance) {
+                    SpawnRequest request{
+                        .type = EntityType::Plant,
+                        .speciesId = entity.speciesId,
+                        .x = newX,
+                        .y = newY,
+                    };
                     spawnRequests.push_back(request);
                 }
             }
@@ -107,8 +134,7 @@ class HerbivoreBehavior final : public IBehavior {
         bool isRandomMove = false;
 
         if (bestScore < 0.0f) {
-            const int rnd = rand();
-            bestDirection = glm::ivec2((rnd % 3) - 1, (rnd / 3 % 3) - 1);
+            bestDirection = glm::ivec2(randomDirection(), randomDirection());
             isRandomMove = true;
         }
 
@@ -117,7 +143,7 @@ class HerbivoreBehavior final : public IBehavior {
 
         if (!insideBounds(newX, newY)) {
         } else {
-            MoveRequest req;
+            MoveRequest req{};
             req.sourceIdx = cell.animalIndex;
             req.fromX = entity.x;
             req.fromY = entity.y;
@@ -156,15 +182,14 @@ class HerbivoreBehavior final : public IBehavior {
         if (entity.reproductionCooldown > 0) return false;
         if (entity.energy <= traits.reproductionThreshold) return false;
 
-        const int randOffset = rand() % DIRS;
-        int i = 0;
+        const int offset = randomDirOffset();
 
-        const int reproductionR = rand() / static_cast<float>(RAND_MAX);
+        const float reproductionP = probability();
 
-        if (reproductionR > traits.reproductionChance) return false;
+        if (reproductionP > traits.reproductionChance) return false;
 
-        for (; i < DIRS; i++) {
-            const int dir = (i + randOffset) % DIRS;
+        for (int i = 0; i < DIRS; i++) {
+            const int dir = (i + offset) % DIRS;
             const int dx = dX[dir];
             const int dy = dY[dir];
 
@@ -179,7 +204,7 @@ class HerbivoreBehavior final : public IBehavior {
             if (neighboringAnimal.speciesId != entity.speciesId) continue;
             if (neighboringAnimal.reproductionCooldown > 0) continue;
 
-            const int randomOffset = rand() % DIRS;
+            const int randomOffset = randomDirOffset();
             for (int j = 0; j < DIRS; j++) {
                 const int birthDir = (j + randomOffset) % DIRS;
                 const int birthDX = dX[birthDir];
@@ -191,11 +216,12 @@ class HerbivoreBehavior final : public IBehavior {
                 if (!insideBounds(birthX, birthY)) continue;
 
                 if (grid[birthY * gridWidth + birthX].animalIndex == -1) {
-                    SpawnRequest request;
-                    request.type = EntityType::Herbivore;
-                    request.speciesId = entity.speciesId;
-                    request.x = birthX;
-                    request.y = birthY;
+                    const SpawnRequest request{
+                        .type = EntityType::Herbivore,
+                        .speciesId = entity.speciesId,
+                        .x = birthX,
+                        .y = birthY
+                    };
                     spawnRequests.push_back(request);
 
 
@@ -243,13 +269,14 @@ class HerbivoreBehavior final : public IBehavior {
                     } else {
                         if (grid[fleeY * gridWidth + fleeX].animalIndex != -1) return false;
 
-                        MoveRequest req;
-                        req.sourceIdx = cell.animalIndex;
-                        req.fromX = entity.x;
-                        req.fromY = entity.y;
-                        req.toX = fleeX;
-                        req.toY = fleeY;
-                        req.priority = MovePriority::FLEE;
+                        const MoveRequest req{
+                            .sourceIdx = cell.animalIndex,
+                            .fromX = entity.x,
+                            .fromY = entity.y,
+                            .toX = fleeX,
+                            .toY = fleeY,
+                            .priority = MovePriority::FLEE,
+                        };
                         moveRequests.push_back(req);
                     }
                     return true;
@@ -361,21 +388,21 @@ class CarnivoreBehavior final : public IBehavior {
         bool isRandomMove = false;
 
         if (bestScore < 0.0f) {
-            const int rnd = rand();
-            bestDirection = glm::ivec2((rnd % 3) - 1, (rnd / 3 % 3) - 1);
+            bestDirection = glm::ivec2(randomDirection(), randomDirection());
             isRandomMove = true;
         }
 
         const int newX = entity.x + bestDirection.x;
         const int newY = entity.y + bestDirection.y;
 
-        MoveRequest req;
-        req.sourceIdx = cell.animalIndex;
-        req.fromX = entity.x;
-        req.fromY = entity.y;
-        req.toX = newX;
-        req.toY = newY;
-        req.priority = isRandomMove ? MovePriority::RANDOM_MOVE : MovePriority::SEEK_FOOD;
+        const MoveRequest req{
+            .sourceIdx = cell.animalIndex,
+            .fromX = entity.x,
+            .fromY = entity.y,
+            .toX = newX,
+            .toY = newY,
+            .priority = isRandomMove ? MovePriority::RANDOM_MOVE : MovePriority::SEEK_FOOD,
+        };
         moveRequests.push_back(req);
         return true;
     }

@@ -15,6 +15,8 @@ struct SpeciesTraits {
     float reproductionChance;
     float reproductionEnergyCost;
 
+    float spontaneousReproductionChance;
+
     float visionRange;
     float fleeingRange;
 

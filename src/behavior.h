@@ -1,10 +1,18 @@
 #ifndef ECOSYSTEM_BEHAVIOR_H
 #define ECOSYSTEM_BEHAVIOR_H
+#include <random>
 #include <vector>
 
 #include "entity.h"
 #include "species.h"
 #include "simulation.h"
+
+static inline std::mt19937 &getRng() {
+    static thread_local std::mt19937 g(
+        static_cast<unsigned>(std::chrono::high_resolution_clock::now().time_since_epoch().count())
+    );
+    return g;
+}
 
 class IBehavior {
 protected:
@@ -26,7 +34,7 @@ public:
         std::vector<MoveRequest> &moveRequests
     ) = 0;
 
-    bool insideBounds(const int x, const int y) const {
+    [[nodiscard]] bool insideBounds(const int x, const int y) const {
         return x >= 0 && y >= 0 && x < gridWidth && y < gridHeight;
     }
 };
