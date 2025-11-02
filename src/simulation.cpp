@@ -57,16 +57,20 @@ public:
 
         entities.push_back(entity);
 
+        if (x < 0 || x >= gridWidth || y < 0 || y >= gridHeight) {
+            std::cerr << "Warning: spawning entity out of bounds (" << x << ", " << y << ")" << std::endl;
+            return;
+        }
+
         const int cellIdx = y * gridWidth + x;
+
         if (type == EntityType::Plant) {
             if (grid[cellIdx].plantIndex != -1) {
-                std::cerr << "Warning: spawning plant on occupied cell (" << x << ", " << y << ")" << std::endl;
                 return;
             }
             grid[cellIdx].plantIndex = entities.size() - 1;
         } else {
             if (grid[cellIdx].animalIndex != -1) {
-                std::cerr << "Warning: spawning animal on occupied cell (" << x << ", " << y << ")" << std::endl;
                 return;
             }
             grid[cellIdx].animalIndex = entities.size() - 1;
@@ -169,7 +173,7 @@ private:
             const SpeciesTraits &traits = speciesTraits[updatedEntity.speciesId];
             updatedEntity.energy -= traits.hungerDamage;
 
-            if (updatedEntity.energy > 0.0f && updatedEntity.age < traits.maxAge) {
+            if (updatedEntity.energy > 0.1f && updatedEntity.age < traits.maxAge) {
                 survivingEntities.push_back(updatedEntity);
             }
         }

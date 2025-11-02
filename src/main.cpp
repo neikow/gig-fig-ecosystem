@@ -337,9 +337,9 @@ int main() {
     config.gridWidth = 40;
     config.gridHeight = 40;
 
-    config.grassCount = 200;
+    config.grassCount = 300;
     config.grassTraits = SpeciesTraits{
-        .maxEnergy = 30.0f,
+        .maxEnergy = 40.0f,
         .reproductionCooldown = 10,
         .reproductionChance = 0.1f,
         .spontaneousReproductionChance = 0.001f,
@@ -347,10 +347,10 @@ int main() {
         .maxAge = 500,
     };
 
-    config.rabbitCount = 100;
+    config.rabbitCount = 200;
     config.rabbitTraits = SpeciesTraits{
         .maxEnergy = 200.0f,
-        .movementEnergyCost = 5.0f,
+        .movementEnergyCost = 1.0f,
         .reproductionThreshold = 100.0f,
         .reproductionCooldown = 50,
         .reproductionChance = 0.3f,
@@ -364,14 +364,14 @@ int main() {
 
     config.wolfCount = 20;
     config.wolfTraits = SpeciesTraits{
-        .maxEnergy = 300.0f,
-        .movementEnergyCost = 8.0f,
+        .maxEnergy = 400.0f,
+        .movementEnergyCost = 2.0f,
         .reproductionThreshold = 150.0f,
-        .reproductionCooldown = 80,
-        .reproductionChance = 0.2f,
+        .reproductionCooldown = 120,
+        .reproductionChance = 0.01f,
         .reproductionEnergyCost = 150.0f,
-        .visionRange = 8.0f,
-        .hungerDamage = 2.0f,
+        .visionRange = 12.0f,
+        .hungerDamage = 0.5f,
         .feedingThreshold = 250.0f,
         .maxAge = 700,
     };
@@ -450,6 +450,7 @@ int main() {
             ImGui::Separator();
 
             if (ImGui::CollapsingHeader("Grass Traits")) {
+                ImGui::PushID("Grass");
                 ImGui::DragFloat("maxEnergy", &uiPending.grassTraits.maxEnergy, 1.0f, 0.0f, 10000.0f);
                 ImGui::DragInt("reproductionCooldown", &uiPending.grassTraits.reproductionCooldown, 1, 0, 10000);
                 ImGui::DragFloat("reproductionChance", &uiPending.grassTraits.reproductionChance, 0.01f, 0.0f,
@@ -459,8 +460,10 @@ int main() {
                 ImGui::DragFloat("hungerDamage", &uiPending.grassTraits.hungerDamage, 0.1f, 0.0f, 1000.0f);
                 ImGui::DragInt("maxAge", &uiPending.grassTraits.maxAge, 1, 0, 100000);
                 uiPendingDirty = uiPendingDirty || ImGui::IsItemEdited();
+                ImGui::PopID();
             }
             if (ImGui::CollapsingHeader("Rabbit Traits")) {
+                ImGui::PushID("Rabbit Traits");
                 ImGui::DragFloat("maxEnergy", &uiPending.rabbitTraits.maxEnergy, 1.0f, 0.0f, 10000.0f);
                 ImGui::DragFloat("movementEnergyCost", &uiPending.rabbitTraits.movementEnergyCost, 0.1f, 0.0f,
                                  1000.0f);
@@ -479,8 +482,10 @@ int main() {
                                  10000.0f);
                 ImGui::DragInt("maxAge", &uiPending.rabbitTraits.maxAge, 1, 0, 100000);
                 uiPendingDirty = uiPendingDirty || ImGui::IsItemEdited();
+                ImGui::PopID();
             }
             if (ImGui::CollapsingHeader("Wolf Traits")) {
+                ImGui::PushID("Wolf Traits");
                 ImGui::DragFloat("maxEnergy", &uiPending.wolfTraits.maxEnergy, 1.0f, 0.0f, 10000.0f);
                 ImGui::DragFloat("movementEnergyCost", &uiPending.wolfTraits.movementEnergyCost, 0.1f, 0.0f,
                                  1000.0f);
@@ -496,6 +501,7 @@ int main() {
                 ImGui::DragFloat("feedingThreshold", &uiPending.wolfTraits.feedingThreshold, 1.0f, 0.0f, 10000.0f);
                 ImGui::DragInt("maxAge", &uiPending.wolfTraits.maxAge, 1, 0, 100000);
                 uiPendingDirty = uiPendingDirty || ImGui::IsItemEdited();
+                ImGui::PopID();
             }
 
             ImGui::Spacing();
