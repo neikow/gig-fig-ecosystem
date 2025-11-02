@@ -527,6 +527,13 @@ int main() {
 
             ImGui::Text("%.1f FPS", io.Framerate);
 
+            ImGui::Separator();
+
+            auto entityCounts = sim->getEntityCounts();
+            ImGui::Text("Grass: %d", entityCounts[SPECIES_GRASS]);
+            ImGui::Text("Rabbit: %d", entityCounts[SPECIES_RABBIT]);
+            ImGui::Text("Wolf: %d", entityCounts[SPECIES_WOLF]);
+
             ImGui::End();
         }
 

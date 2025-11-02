@@ -36,15 +36,24 @@ public:
         speciesTraits[speciesId] = traits;
     }
 
+    std::unordered_map<int, int> getEntityCounts() override {
+        std::unordered_map<int, int> counts;
+        for (const auto &e: entities) {
+            ++counts[e.speciesId];
+        }
+        return counts;
+    }
+
     void spawnEntity(const EntityType type, const int speciesId, const int x, const int y) {
-        EntityData entity;
-        entity.x = x;
-        entity.y = y;
-        entity.type = type;
-        entity.speciesId = speciesId;
-        entity.energy = speciesTraits[speciesId].maxEnergy;
-        entity.age = 0;
-        entity.reproductionCooldown = speciesTraits[speciesId].reproductionCooldown;
+        const EntityData entity{
+            .x = x,
+            .y = y,
+            .type = type,
+            .speciesId = speciesId,
+            .energy = speciesTraits[speciesId].maxEnergy,
+            .age = 0,
+            .reproductionCooldown = speciesTraits[speciesId].reproductionCooldown
+        };
 
         entities.push_back(entity);
 

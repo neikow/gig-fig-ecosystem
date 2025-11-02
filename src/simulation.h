@@ -57,6 +57,8 @@ public:
     virtual void step() = 0;
 
     virtual std::pair<std::vector<GridCell>, std::vector<EntityData> > getGridData() = 0;
+
+    virtual std::unordered_map<int, int> getEntityCounts() = 0;
 };
 
 std::unique_ptr<ISimulation> createEcosystemSimulation(SimulationSettings config);
