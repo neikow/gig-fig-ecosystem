@@ -1,6 +1,7 @@
 #ifndef ECOSYSTEM_SIMULATION_H
 #define ECOSYSTEM_SIMULATION_H
 #include "entity.h"
+#include "species.h"
 
 constexpr int SPECIES_GRASS = 0;
 constexpr int SPECIES_RABBIT = 1;
@@ -30,6 +31,17 @@ struct MoveRequest {
     MovePriority priority;
 };
 
+struct SimulationSettings {
+    int gridWidth, gridHeight;
+
+    int grassCount;
+    SpeciesTraits grassTraits;
+    int rabbitCount;
+    SpeciesTraits rabbitTraits;
+    int wolfCount;
+    SpeciesTraits wolfTraits;
+};
+
 class ISimulation {
 protected:
     int gridWidth, gridHeight;
@@ -47,6 +59,6 @@ public:
     virtual std::pair<std::vector<GridCell>, std::vector<EntityData> > getGridData() = 0;
 };
 
-std::unique_ptr<ISimulation> createEcosystemSimulation(const int gridWidth, const int gridHeight);
+std::unique_ptr<ISimulation> createEcosystemSimulation(SimulationSettings config);
 
 #endif //ECOSYSTEM_SIMULATION_H

@@ -6,6 +6,7 @@
 #include <iostream>
 
 #include "simulation.h"
+#include "glm/vec3.hpp"
 
 static GLuint compileShader(GLenum type, const char *src) {
     GLuint s = glCreateShader(type);
@@ -223,6 +224,19 @@ static int clamp(const int val, const int minVal, const int maxVal) {
     return std::max(minVal, std::min(maxVal, val));
 }
 
+glm::ivec3 speciesColor(const int speciesId) {
+    switch (speciesId) {
+        case SPECIES_RABBIT:
+            return glm::ivec3(200, 200, 200);
+        case SPECIES_WOLF:
+            return glm::ivec3(100, 100, 100);
+        case SPECIES_GRASS:
+            return glm::ivec3(0, 100, 0);
+        default:
+            return glm::ivec3(255, 0, 255);
+    }
+}
+
 static void drawSimulationToTexture(
     ISimulation &sim,
     const GLuint tex,
@@ -242,32 +256,18 @@ static void drawSimulationToTexture(
 
             uint8_t r = 0, g = 0, b = 0, a = 255;
             if (cell.plantIndex >= 0) {
-                r = 0;
-                g = 100;
-                b = 0;
+                const auto color = speciesColor(SPECIES_GRASS);
+                r = color.r;
+                g = color.g;
+                b = color.b;
             }
             if (cell.animalIndex >= 0) {
-                auto animal = entities[cell.animalIndex];
+                const auto animal = entities[cell.animalIndex];
+                const auto col = speciesColor(animal.speciesId);
 
-                switch (animal.speciesId) {
-                    case SPECIES_RABBIT:
-                        r = clamp(r + 200, 0, 255);
-                        g = clamp(g + 200, 0, 255);
-                        b = clamp(b + 200, 0, 255);
-                        break;
-                    case SPECIES_WOLF:
-                        r = clamp(r + 100, 0, 255);
-                        g = clamp(g + 100, 0, 255);
-                        b = clamp(b + 100, 0, 255);
-                        break;
-                    default:
-                        std::cerr << "Unhandled species id: " << animal.speciesId << std::endl;
-
-                        r = 255;
-                        g = 0;
-                        b = 255;
-                        break;
-                }
+                r = clamp(r + col.r, 0, 255);
+                g = clamp(g + col.r, 0, 255);
+                b = clamp(b + col.r, 0, 255);
             }
 
             const uint8_t px[4] = {r, g, b, a};
@@ -332,14 +332,57 @@ int main() {
     double lastTime = glfwGetTime();
     double timeAccum = 0.0;
     const int maxStepsPerFrame = 100;
-    int gridHeight = 30, gridWidth = 30;
-    int prevGridHeight = gridHeight, prevGridWidth = gridWidth;
 
-    GLuint gridTex = createGridTexture(gridWidth, gridHeight);
-    std::vector<uint32_t> gridColors(gridWidth * gridHeight, packRGBA(0, 0, 0, 255));
-    updateGridTexture(gridTex, gridWidth, gridHeight, gridColors);
+    SimulationSettings config;
+    config.gridWidth = 40;
+    config.gridHeight = 40;
 
-    auto sim = createEcosystemSimulation(gridWidth, gridHeight);
+    config.grassCount = 200;
+    config.grassTraits = SpeciesTraits{
+        .maxEnergy = 30.0f,
+        .reproductionCooldown = 10,
+        .reproductionChance = 0.1f,
+        .hungerDamage = 0.0f,
+        .maxAge = 500,
+    };
+
+    config.rabbitCount = 100;
+    config.rabbitTraits = SpeciesTraits{
+        .maxEnergy = 200.0f,
+        .movementEnergyCost = 5.0f,
+        .reproductionThreshold = 100.0f,
+        .reproductionCooldown = 50,
+        .reproductionChance = 0.3f,
+        .reproductionEnergyCost = 100.0f,
+        .visionRange = 16.0f,
+        .fleeingRange = 4.0f,
+        .hungerDamage = 1.0f,
+        .feedingThreshold = 150.0f,
+        .maxAge = 500,
+    };
+
+    config.wolfCount = 20;
+    config.wolfTraits = SpeciesTraits{
+        .maxEnergy = 300.0f,
+        .movementEnergyCost = 8.0f,
+        .reproductionThreshold = 150.0f,
+        .reproductionCooldown = 80,
+        .reproductionChance = 0.2f,
+        .reproductionEnergyCost = 150.0f,
+        .visionRange = 8.0f,
+        .hungerDamage = 2.0f,
+        .feedingThreshold = 250.0f,
+        .maxAge = 700,
+    };
+
+
+    int prevGridHeight = config.gridHeight, prevGridWidth = config.gridWidth;
+
+    GLuint gridTex = createGridTexture(config.gridWidth, config.gridHeight);
+    std::vector<uint32_t> gridColors(config.gridWidth * config.gridHeight, packRGBA(0, 0, 0, 255));
+    updateGridTexture(gridTex, config.gridWidth, config.gridHeight, gridColors);
+
+    auto sim = createEcosystemSimulation(config);
 
     while (!glfwWindowShouldClose(window)) {
         glfwPollEvents();
@@ -361,8 +404,8 @@ int main() {
         {
             ImGui::Begin("World Settings");
 
-            ImGui::SliderInt("Height", &gridHeight, 10, 320);
-            ImGui::SliderInt("Width", &gridWidth, 10, 320);
+            ImGui::SliderInt("Height", &config.gridHeight, 10, 320);
+            ImGui::SliderInt("Width", &config.gridWidth, 10, 320);
             ImGui::End();
         }
 
@@ -374,16 +417,16 @@ int main() {
             ImGui::End();
         }
 
-        if (gridHeight != prevGridHeight || gridWidth != prevGridWidth) {
-            prevGridHeight = gridHeight;
-            prevGridWidth = gridWidth;
+        if (config.gridHeight != prevGridHeight || config.gridWidth != prevGridWidth) {
+            prevGridHeight = config.gridHeight;
+            prevGridWidth = config.gridWidth;
 
             glDeleteTextures(0, &gridTex);
-            gridTex = createGridTexture(gridWidth, gridHeight);
-            gridColors.resize(gridWidth * gridHeight, packRGBA(0, 0, 0, 255));
-            updateGridTexture(gridTex, gridWidth, gridHeight, gridColors);
+            gridTex = createGridTexture(config.gridWidth, config.gridHeight);
+            gridColors.resize(config.gridWidth * config.gridHeight, packRGBA(0, 0, 0, 255));
+            updateGridTexture(gridTex, config.gridWidth, config.gridHeight, gridColors);
 
-            sim = createEcosystemSimulation(gridWidth, gridHeight);
+            sim = createEcosystemSimulation(config);
         }
 
         // Rendering
@@ -410,10 +453,10 @@ int main() {
             ++stepsThisFrame;
         }
 
-        drawSimulationToTexture(*sim, gridTex, gridWidth, gridHeight);
+        drawSimulationToTexture(*sim, gridTex, config.gridWidth, config.gridHeight);
 
         glfwGetFramebufferSize(window, &displayWidth, &displayHeight);
-        drawCenteredTexture(quad, gridTex, gridWidth, gridHeight, displayWidth, displayHeight);
+        drawCenteredTexture(quad, gridTex, config.gridWidth, config.gridHeight, displayWidth, displayHeight);
 
         // Render ImGui
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());

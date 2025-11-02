@@ -369,9 +369,6 @@ class CarnivoreBehavior final : public IBehavior {
         const int newX = entity.x + bestDirection.x;
         const int newY = entity.y + bestDirection.y;
 
-        std::cout << "New Movement Proposal: (" << newX << ", " << newY << ") from (" << entity.x << ", " << entity.y <<
-                ")" << std::endl;
-
         MoveRequest req;
         req.sourceIdx = cell.animalIndex;
         req.fromX = entity.x;

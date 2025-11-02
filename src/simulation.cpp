@@ -8,6 +8,7 @@
 
 #include "species.h"
 #include "behavior.h"
+#include "glm/vec2.hpp"
 
 class EcosystemSimulation final : public ISimulation {
     std::vector<GridCell> grid;
@@ -49,8 +50,16 @@ public:
 
         const int cellIdx = y * gridWidth + x;
         if (type == EntityType::Plant) {
+            if (grid[cellIdx].plantIndex != -1) {
+                std::cerr << "Warning: spawning plant on occupied cell (" << x << ", " << y << ")" << std::endl;
+                return;
+            }
             grid[cellIdx].plantIndex = entities.size() - 1;
         } else {
+            if (grid[cellIdx].animalIndex != -1) {
+                std::cerr << "Warning: spawning animal on occupied cell (" << x << ", " << y << ")" << std::endl;
+                return;
+            }
             grid[cellIdx].animalIndex = entities.size() - 1;
         }
     }
@@ -175,64 +184,49 @@ private:
     }
 };
 
-std::unique_ptr<ISimulation> createEcosystemSimulation(const int gridWidth, const int gridHeight) {
-    auto sim = std::make_unique<EcosystemSimulation>(gridWidth, gridHeight);
+glm::ivec2 randomPosition(const int gridWidth, const int gridHeight) {
+    static std::mt19937 rng(std::random_device{}());
+    std::uniform_int_distribution distX(0, gridWidth - 1);
+    std::uniform_int_distribution distY(0, gridHeight - 1);
+    return glm::ivec2(distX(rng), distY(rng));
+}
 
-    sim->registerBehavior(EntityType::Plant, makePlantBehavior(gridWidth, gridHeight));
-    sim->registerBehavior(EntityType::Herbivore, makeHerbivoreBehavior(gridWidth, gridHeight));
-    sim->registerBehavior(EntityType::Carnivore, makeCarnivoreBehavior(gridWidth, gridHeight));
+std::unique_ptr<ISimulation> createEcosystemSimulation(SimulationSettings config) {
+    auto sim = std::make_unique<EcosystemSimulation>(config.gridWidth, config.gridHeight);
+
+    sim->registerBehavior(EntityType::Plant, makePlantBehavior(config.gridWidth, config.gridHeight));
+    sim->registerBehavior(EntityType::Herbivore, makeHerbivoreBehavior(config.gridWidth, config.gridHeight));
+    sim->registerBehavior(EntityType::Carnivore, makeCarnivoreBehavior(config.gridWidth, config.gridHeight));
 
     sim->registerSpecies(
         SPECIES_GRASS,
-        SpeciesTraits{
-            .maxEnergy = 30.0f,
-            .reproductionCooldown = 10,
-            .reproductionChance = 0.1f,
-            .hungerDamage = 0.0f,
-            .maxAge = 500,
-        });
+        config.grassTraits
+    );
 
-    sim->spawnEntity(EntityType::Plant, SPECIES_GRASS, gridWidth / 2, gridHeight / 2);
-    sim->spawnEntity(EntityType::Plant, SPECIES_GRASS, gridWidth / 2 + 2, gridHeight / 2 + 1);
-    sim->spawnEntity(EntityType::Plant, SPECIES_GRASS, gridWidth / 2 + 4, gridHeight / 2 - 1);
-    sim->spawnEntity(EntityType::Plant, SPECIES_GRASS, gridWidth / 2 + 5, gridHeight / 2 - 4);
+    for (int i = 0; i < config.grassCount; ++i) {
+        const auto pos = randomPosition(config.gridWidth, config.gridHeight);
+        sim->spawnEntity(EntityType::Plant, SPECIES_GRASS, pos.x, pos.y);
+    }
 
     sim->registerSpecies(
         SPECIES_RABBIT,
-        SpeciesTraits{
-            .maxEnergy = 200.0f,
-            .movementEnergyCost = 5.0f,
-            .reproductionThreshold = 100.0f,
-            .reproductionCooldown = 50,
-            .reproductionChance = 0.3f,
-            .reproductionEnergyCost = 100.0f,
-            .visionRange = 16.0f,
-            .fleeingRange = 4.0f,
-            .hungerDamage = 1.0f,
-            .feedingThreshold = 150.0f,
-            .maxAge = 500,
-        });
+        config.rabbitTraits
+    );
 
-    sim->spawnEntity(EntityType::Herbivore, SPECIES_RABBIT, gridWidth / 2, gridHeight / 4 + 1);
-    sim->spawnEntity(EntityType::Herbivore, SPECIES_RABBIT, gridWidth / 2, gridHeight / 4 + 2);
-    sim->spawnEntity(EntityType::Herbivore, SPECIES_RABBIT, gridWidth / 2, gridHeight / 4 + 3);
+    for (int i = 0; i < config.rabbitCount; ++i) {
+        const auto pos = randomPosition(config.gridWidth, config.gridHeight);
+        sim->spawnEntity(EntityType::Herbivore, SPECIES_RABBIT, pos.x, pos.y);
+    }
 
     sim->registerSpecies(
         SPECIES_WOLF,
-        SpeciesTraits{
-            .maxEnergy = 300.0f,
-            .movementEnergyCost = 8.0f,
-            .reproductionThreshold = 150.0f,
-            .reproductionCooldown = 80,
-            .reproductionChance = 0.2f,
-            .reproductionEnergyCost = 150.0f,
-            .visionRange = 8.0f,
-            .hungerDamage = 2.0f,
-            .feedingThreshold = 250.0f,
-            .maxAge = 700,
-        });
+        config.wolfTraits
+    );
 
-    sim->spawnEntity(EntityType::Carnivore, SPECIES_WOLF, 2 * gridWidth / 3, 2 * gridHeight / 3);
+    for (int i = 0; i < config.wolfCount; ++i) {
+        const auto pos = randomPosition(config.gridWidth, config.gridHeight);
+        sim->spawnEntity(EntityType::Carnivore, SPECIES_WOLF, pos.x, pos.y);
+    }
 
     return sim;
 }
