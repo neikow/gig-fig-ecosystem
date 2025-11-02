@@ -446,6 +446,72 @@ class CarnivoreBehavior final : public IBehavior {
         return false;
     }
 
+    bool handleReproduction(
+        EntityData &entity,
+        const SpeciesTraits &traits,
+        const std::vector<GridCell> &grid,
+        const std::vector<EntityData> &entities,
+        std::vector<SpawnRequest> &spawnRequests
+    ) const {
+        if (entity.reproductionCooldown > 0) return false;
+        if (entity.energy <= traits.reproductionThreshold) return false;
+
+        const int offset = randomDirOffset();
+
+        const float reproductionP = probability();
+
+        if (reproductionP > traits.reproductionChance) return false;
+
+        for (int i = 0; i < DIRS; i++) {
+            const int dir = (i + offset) % DIRS;
+            const int dx = dX[dir];
+            const int dy = dY[dir];
+
+            const int newX = entity.x + dx;
+            const int newY = entity.y + dy;
+
+            if (!insideBounds(newX, newY)) continue;
+
+            const int animalIndex = grid[newY * gridWidth + newX].animalIndex;
+            if (animalIndex == -1) continue;
+            EntityData neighboringAnimal = entities[animalIndex];
+            if (neighboringAnimal.speciesId != entity.speciesId) continue;
+            if (neighboringAnimal.reproductionCooldown > 0) continue;
+
+            const int randomOffset = randomDirOffset();
+            for (int j = 0; j < DIRS; j++) {
+                const int birthDir = (j + randomOffset) % DIRS;
+                const int birthDX = dX[birthDir];
+                const int birthDY = dY[birthDir];
+
+                const int birthX = entity.x + birthDX;
+                const int birthY = entity.y + birthDY;
+
+                if (!insideBounds(birthX, birthY)) continue;
+
+                if (grid[birthY * gridWidth + birthX].animalIndex == -1) {
+                    const SpawnRequest request{
+                        .type = EntityType::Carnivore,
+                        .speciesId = entity.speciesId,
+                        .x = birthX,
+                        .y = birthY
+                    };
+                    spawnRequests.push_back(request);
+
+
+                    entity.reproductionCooldown = traits.reproductionCooldown;
+                    entity.energy -= traits.reproductionEnergyCost;
+                    neighboringAnimal.reproductionCooldown = traits.reproductionCooldown;
+                    neighboringAnimal.energy -= traits.reproductionEnergyCost;
+
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
     const void execute(
         EntityData &entity,
         const SpeciesTraits &traits,
@@ -455,6 +521,18 @@ class CarnivoreBehavior final : public IBehavior {
         std::vector<SpawnRequest> &spawnRequests,
         std::vector<MoveRequest> &moveRequests
     ) override {
+        if (
+            handleReproduction(
+                entity,
+                traits,
+                grid,
+                entities,
+                spawnRequests
+            )
+        ) {
+            return;
+        }
+
         if (
             handleEating(
                 entity,
