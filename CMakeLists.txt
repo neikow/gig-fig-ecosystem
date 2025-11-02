@@ -4,10 +4,8 @@ project(Ecosystem)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# Find OpenGL
 find_package(OpenGL REQUIRED)
 
-# GLFW - Option 1: Use FetchContent (recommended)
 include(FetchContent)
 FetchContent_Declare(
         glfw
@@ -16,7 +14,13 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(glfw)
 
-# ImGui - Download and configure
+FetchContent_Declare(
+        glm
+        GIT_REPOSITORY https://github.com/g-truc/glm.git
+        GIT_TAG 1.0.2
+)
+FetchContent_MakeAvailable(glm)
+
 FetchContent_Declare(
         imgui
         GIT_REPOSITORY https://github.com/ocornut/imgui.git
@@ -48,6 +52,16 @@ target_link_libraries(imgui PUBLIC
 # Main executable
 add_executable(${PROJECT_NAME}
         src/main.cpp
+        src/simulation.cpp
+        src/behavior.cpp
+        src/behavior.h
+        src/entity.cpp
+        src/entity.h
+        src/species.cpp
+        src/species.h
+        src/simulation.h
+        src/utils.h
+        src/utils.cpp
 )
 
 add_library(glad STATIC ${CMAKE_SOURCE_DIR}/external/glad/src/gl.c)
@@ -56,6 +70,7 @@ target_include_directories(glad PUBLIC ${CMAKE_SOURCE_DIR}/external/glad/include
 target_link_libraries(${PROJECT_NAME} PRIVATE
         imgui
         glfw
+        glm
         glad
         OpenGL::GL
 )
