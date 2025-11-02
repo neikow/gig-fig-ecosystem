@@ -35,9 +35,9 @@ pour que chaque espèce survive le plus possible !
 
 Bonus :
 
-- Ajouter un genre aux animaux (mâle et femelle)
-- Après une naissance le nouveau né reste proche d’un parent pendant plusieurs tours
-- Les animaux peuvent mourir de faim si ils restent trop longtemps sans manger.
-- Les animaux qui viennent de se nourrir n’ont plus faim pour quelques tours
-- Les animaux recherchent leur nourriture ou un partenaire de reproduction à
+- [ ] Ajouter un genre aux animaux (mâle et femelle)
+- [ ] Après une naissance le nouveau né reste proche d’un parent pendant plusieurs tours
+- [x] Les animaux peuvent mourir de faim si ils restent trop longtemps sans manger.
+- [x] Les animaux qui viennent de se nourrir n’ont plus faim pour quelques tours
+- [-] Les animaux recherchent leur nourriture ou un partenaire de reproduction à
   quelques cases autour d’eux. Ils essaient aussi de fuir pour ne pas être mangés.
