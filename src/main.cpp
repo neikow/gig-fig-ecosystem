@@ -1,11 +1,6 @@
-#define GLFW_INCLUDE_NONE
-#include <GLFW/glfw3.h>
-#include <glad/gl.h>
-#include <imgui.h>
 #include <iostream>
 
 #include "app.h"
-#include "gl_utils.h"
 #include "simulation.h"
 #include "glm/vec3.hpp"
 
@@ -30,12 +25,12 @@ int main() {
         .movementEnergyCost = 1.0f,
         .reproductionThreshold = 100.0f,
         .reproductionCooldown = 50,
-        .reproductionChance = 0.3f,
+        .reproductionChance = 0.1f,
         .reproductionEnergyCost = 100.0f,
         .visionRange = 16.0f,
         .fleeingRange = 4.0f,
         .hungerDamage = 1.0f,
-        .feedingThreshold = 150.0f,
+        .feedingThreshold = 180.0f,
         .maxAge = 500,
     };
 
