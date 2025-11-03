@@ -3,32 +3,42 @@ name: CI - Build executable
 on:
   push:
     branches: [ main ]
-
   pull_request:
     branches: [ main ]
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        os: [ ubuntu-latest, macos-latest ]
+    runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Install system dependencies
+      - name: Install Linux system dependencies
+        if: ${{ matrix.os == 'ubuntu-latest' }}
         run: |
           sudo apt-get update
           sudo apt-get install -y build-essential cmake ninja-build pkg-config \
             libgl1-mesa-dev libx11-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev \
             libwayland-dev wayland-protocols libxkbcommon-dev libxkbcommon-x11-dev
 
+      - name: Install macOS dependencies
+        if: ${{ matrix.os == 'macos-latest' }}
+        run: |
+          brew update
+          brew install cmake ninja pkg-config
+          # install any additional macOS libraries here (e.g. glfw, SDL) via brew if needed
+
       - name: Configure (CMake)
         run: cmake -S . -B build -G "Ninja" -DCMAKE_BUILD_TYPE=Release
 
       - name: Build
-        run: cmake --build build --config Release -- -j$(nproc)
+        run: cmake --build build --config Release -- -j$(nproc || sysctl -n hw.ncpu)
 
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ecosystem-build
+          name: ecosystem-${{ matrix.os }}
           path: build
