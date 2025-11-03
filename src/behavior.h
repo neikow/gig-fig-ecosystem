@@ -2,6 +2,7 @@
 #define ECOSYSTEM_BEHAVIOR_H
 #include <random>
 #include <vector>
+#include <chrono>
 
 #include "entity.h"
 #include "species.h"

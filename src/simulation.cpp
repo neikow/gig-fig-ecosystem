@@ -1,10 +1,10 @@
 #include <unordered_map>
 #include <vector>
-
-#include "simulation.h"
-
 #include <iostream>
 #include <random>
+#include <algorithm>
+
+#include "simulation.h"
 
 #include "species.h"
 #include "behavior.h"
@@ -124,11 +124,11 @@ private:
     void resolveMoveRequests() {
         if (moveRequests.empty()) return;
 
-        static std::mt19937 rng(std::random_device{}());
-        std::ranges::shuffle(moveRequests, rng);
+        std::shuffle(moveRequests.begin(), moveRequests.end(), rng);
 
-        std::ranges::stable_sort(
-            moveRequests,
+        std::stable_sort(
+            moveRequests.begin(),
+            moveRequests.end(),
             [](const MoveRequest &a, const MoveRequest &b) {
                 return static_cast<int>(a.priority) > static_cast<int>(b.priority);
             }
