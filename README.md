@@ -1,10 +1,16 @@
 # Ecosystem
 
-## Architecture du projet
+## Project Architecture
 
-Entities & Behaviors
+To make the app extensible, the implementation uses an entity/behavior driven system. Adding new species and behaviors requires 3 (or 4) steps:
+- Create the behavior class
+- Create the species traits definition
+- Link the behavior to the species
+- (Optional) Add the config to the GUI
 
-## Sujet
+OpenGL is used for the grid rendering. ImGui is used for the interface. All logic is handled with pure C++. Because the development is done on MacOS, compute shaders are not usable due to the available OpenGL version being too low.
+
+## Subject (French)
 
 On veut simuler la croissance et décroissance de populations animales.
 
