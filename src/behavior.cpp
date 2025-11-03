@@ -109,23 +109,25 @@ class HerbivoreBehavior final : public IBehavior {
         glm::ivec2 bestDirection(0, 0);
         float bestScore = -1.0f;
 
-        for (int dy = -traits.visionRange; dy <= traits.visionRange; dy++) {
-            for (int dx = -traits.visionRange; dx <= traits.visionRange; dx++) {
-                if (isSelf(dx, dy) || !inRange(dx, dy, traits.visionRange)) continue;
+        if (entity.energy < traits.feedingThreshold) {
+            for (int dy = -traits.visionRange; dy <= traits.visionRange; dy++) {
+                for (int dx = -traits.visionRange; dx <= traits.visionRange; dx++) {
+                    if (isSelf(dx, dy) || !inRange(dx, dy, traits.visionRange)) continue;
 
-                const int newX = entity.x + dx;
-                const int newY = entity.y + dy;
+                    const int newX = entity.x + dx;
+                    const int newY = entity.y + dy;
 
-                if (!insideBounds(newX, newY)) continue;
+                    if (!insideBounds(newX, newY)) continue;
 
-                const GridCell &targetCell = grid[newY * gridWidth + newX];
-                if (targetCell.plantIndex != -1) {
-                    const float distance = dx * dx + dy + dy;
-                    const float score = 1.0f / (distance + 0.1f);
+                    const GridCell &targetCell = grid[newY * gridWidth + newX];
+                    if (targetCell.plantIndex != -1) {
+                        const float distance = dx * dx + dy + dy;
+                        const float score = 1.0f / (distance + 0.1f);
 
-                    if (score > bestScore) {
-                        bestScore = score;
-                        bestDirection = glm::ivec2((dx > 0) - (dx < 0), (dy > 0) - (dy < 0));
+                        if (score > bestScore) {
+                            bestScore = score;
+                            bestDirection = glm::ivec2((dx > 0) - (dx < 0), (dy > 0) - (dy < 0));
+                        }
                     }
                 }
             }
@@ -143,13 +145,14 @@ class HerbivoreBehavior final : public IBehavior {
 
         if (!insideBounds(newX, newY)) {
         } else {
-            MoveRequest req{};
-            req.sourceIdx = cell.animalIndex;
-            req.fromX = entity.x;
-            req.fromY = entity.y;
-            req.toX = newX;
-            req.toY = newY;
-            req.priority = isRandomMove ? MovePriority::RANDOM_MOVE : MovePriority::SEEK_FOOD;
+            const MoveRequest req{
+                .sourceIdx = cell.animalIndex,
+                .fromX = entity.x,
+                .fromY = entity.y,
+                .toX = newX,
+                .toY = newY,
+                .priority = isRandomMove ? MovePriority::RANDOM_MOVE : MovePriority::SEEK_FOOD,
+            };
             moveRequests.push_back(req);
             return true;
         }
