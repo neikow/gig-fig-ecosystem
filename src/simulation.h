@@ -1,5 +1,6 @@
 #ifndef ECOSYSTEM_SIMULATION_H
 #define ECOSYSTEM_SIMULATION_H
+#include <memory>
 #include "entity.h"
 #include "species.h"
 

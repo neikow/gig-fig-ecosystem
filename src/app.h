@@ -5,6 +5,7 @@
 #ifndef ECOSYSTEM_APP_H
 #define ECOSYSTEM_APP_H
 #include <unordered_map>
+#include <memory>
 
 #include "gl_utils.h"
 #include "simulation.h"
