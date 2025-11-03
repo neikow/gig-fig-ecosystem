@@ -1,7 +1,3 @@
-//
-// Created by Vitaly Lysen on 03/11/2025.
-//
-
 #ifndef ECOSYSTEM_APP_H
 #define ECOSYSTEM_APP_H
 #include <unordered_map>

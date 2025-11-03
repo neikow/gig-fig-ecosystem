@@ -97,9 +97,7 @@ GLuint createGridTexture(const int w, const int h) {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    // ensure tight packing for arbitrary widths
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-    // allocate but do not initialize
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
     glBindTexture(GL_TEXTURE_2D, 0);
     return tex;
@@ -121,9 +119,7 @@ void updateGridTexture(const GLuint tex, const int w, const int h, const std::ve
         pixels[i * 4 + 3] = a;
     }
     glBindTexture(GL_TEXTURE_2D, tex);
-    // ensure tight packing for arbitrary widths
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-    // replace whole texture
     glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, w, h, GL_RGBA, GL_UNSIGNED_BYTE, pixels.data());
     glBindTexture(GL_TEXTURE_2D, 0);
 }
@@ -150,12 +146,9 @@ void drawCenteredTexture(
 
     const int targetW = gridW * cellPx;
     const int targetH = gridH * cellPx;
-
-    // If still larger than display due to rounding, clamp (defensive)
     const int drawW = std::min(targetW, displayW);
     const int drawH = std::min(targetH, displayH);
 
-    // top-left in pixels (origin top-left)
     const int px = (displayW - drawW) / 2;
     const int py = (displayH - drawH) / 2;
 
@@ -177,7 +170,6 @@ void drawCenteredTexture(
         rightN, topN, 1.0f, 0.0f
     };
 
-    // Setup state
     glUseProgram(q.program);
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, tex);
@@ -186,7 +178,6 @@ void drawCenteredTexture(
 
     glBindVertexArray(q.vao);
     glBindBuffer(GL_ARRAY_BUFFER, q.vbo);
-    // update vertex data
     glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(verts), verts);
     glDrawArrays(GL_TRIANGLES, 0, 6);
     glBindVertexArray(0);
