@@ -64,6 +64,8 @@ add_executable(${PROJECT_NAME}
         src/utils.cpp
         src/gl_utils.cpp
         src/gl_utils.h
+        src/app.cpp
+        src/app.h
 )
 
 add_library(glad STATIC ${CMAKE_SOURCE_DIR}/external/glad/src/gl.c)

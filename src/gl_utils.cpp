@@ -4,6 +4,10 @@
 #include <iostream>
 #include <string>
 
+#include "imgui.h"
+#include "imgui_impl_glfw.h"
+#include "imgui_impl_opengl3.h"
+
 GLuint compileShader(const GLenum type, const char *src) {
     GLuint s = glCreateShader(type);
     glShaderSource(s, 1, &src, nullptr);
@@ -202,4 +206,65 @@ void destroyCenteredQuadResources(CenteredQuad &q) {
         glDeleteProgram(q.program);
         q.program = 0;
     }
+}
+
+bool initGLFW() {
+    if (!glfwInit()) {
+        std::cerr << "Failed to initialize GLFW\n";
+        return false;
+    }
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+#ifdef __APPLE__
+    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+#endif
+    return true;
+}
+
+GLFWwindow *createWindow(const int w, const int h, const char *title) {
+    GLFWwindow *win = glfwCreateWindow(w, h, title, nullptr, nullptr);
+    if (!win) {
+        std::cerr << "Failed to create GLFW window\n";
+        return nullptr;
+    }
+    glfwMakeContextCurrent(win);
+    glfwSwapInterval(1);
+    return win;
+}
+
+bool initGlad() {
+    if (!gladLoadGL(glfwGetProcAddress)) {
+        std::cerr << "Failed to initialize GLAD" << std::endl;
+        return false;
+    }
+    return true;
+}
+
+ImGuiIO &initImGui(GLFWwindow *window) {
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGuiIO &io = ImGui::GetIO();
+
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
+
+    ImGui::StyleColorsDark();
+
+    ImGui_ImplGlfw_InitForOpenGL(window, true);
+    ImGui_ImplOpenGL3_Init("#version 410");
+
+    return io;
+}
+
+void destroyImGui() {
+    ImGui_ImplOpenGL3_Shutdown();
+    ImGui_ImplGlfw_Shutdown();
+    ImGui::DestroyContext();
+}
+
+void shutdownGLFW(GLFWwindow *window) {
+    if (window) {
+        glfwDestroyWindow(window);
+    }
+    glfwTerminate();
 }
