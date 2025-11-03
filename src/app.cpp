@@ -88,6 +88,12 @@ void App::drawSimulationToTexture() const {
                 r = std::clamp(r + col.r, 0, 255);
                 g = std::clamp(g + col.r, 0, 255);
                 b = std::clamp(b + col.r, 0, 255);
+
+                if (animal.gender == Gender::Female) {
+                    r = std::clamp(r + 20, 0, 255);
+                } else if (animal.gender == Gender::Male) {
+                    b = std::clamp(b + 20, 0, 255);
+                }
             }
 
             const uint8_t px[4] = {r, g, b, a};

@@ -202,6 +202,7 @@ class HerbivoreBehavior final : public IBehavior {
             if (animalIndex == -1) continue;
             EntityData neighboringAnimal = entities[animalIndex];
             if (neighboringAnimal.speciesId != entity.speciesId) continue;
+            if (neighboringAnimal.gender == entity.gender) continue;
             if (neighboringAnimal.reproductionCooldown > 0) continue;
 
             const int randomOffset = randomDirOffset();
@@ -476,6 +477,7 @@ class CarnivoreBehavior final : public IBehavior {
             if (animalIndex == -1) continue;
             EntityData neighboringAnimal = entities[animalIndex];
             if (neighboringAnimal.speciesId != entity.speciesId) continue;
+            if (neighboringAnimal.gender == entity.gender) continue;
             if (neighboringAnimal.reproductionCooldown > 0) continue;
 
             const int randomOffset = randomDirOffset();

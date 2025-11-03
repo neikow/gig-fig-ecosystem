@@ -10,6 +10,8 @@
 #include "behavior.h"
 #include "glm/vec2.hpp"
 
+static std::mt19937 rng(std::random_device{}());
+
 class EcosystemSimulation final : public ISimulation {
     std::vector<GridCell> grid;
     std::vector<EntityData> entities;
@@ -44,7 +46,13 @@ public:
         return counts;
     }
 
-    void spawnEntity(const EntityType type, const int speciesId, const int x, const int y) {
+    void spawnEntity(
+        const EntityType type,
+        const int speciesId,
+        const int x,
+        const int y,
+        const Gender gender = Gender::None
+    ) {
         const EntityData entity{
             .x = x,
             .y = y,
@@ -52,7 +60,8 @@ public:
             .speciesId = speciesId,
             .energy = speciesTraits[speciesId].maxEnergy,
             .age = 0,
-            .reproductionCooldown = speciesTraits[speciesId].reproductionCooldown
+            .reproductionCooldown = speciesTraits[speciesId].reproductionCooldown,
+            .gender = gender,
         };
 
         entities.push_back(entity);
@@ -153,9 +162,18 @@ private:
     }
 
     void processSpawnRequests() {
+        std::uniform_int_distribution<> genderDist(1, 2);
         for (const auto &[type, speciesId, x, y]: spawnRequests) {
-            spawnEntity(type, speciesId, x, y);
+            Gender gender;
+            if (type == EntityType::Plant || type == EntityType::None) {
+                gender = Gender::None;
+            } else {
+                gender = static_cast<Gender>(genderDist(rng));
+            }
+
+            spawnEntity(type, speciesId, x, y, gender);
         }
+        spawnRequests.clear();
     }
 
     void processEntityLifecycle() {
@@ -198,10 +216,14 @@ private:
 };
 
 glm::ivec2 randomPosition(const int gridWidth, const int gridHeight) {
-    static std::mt19937 rng(std::random_device{}());
     std::uniform_int_distribution distX(0, gridWidth - 1);
     std::uniform_int_distribution distY(0, gridHeight - 1);
     return {distX(rng), distY(rng)};
+}
+
+Gender randomGender() {
+    std::uniform_int_distribution dist(1, 2);
+    return static_cast<Gender>(dist(rng));
 }
 
 std::unique_ptr<ISimulation> createEcosystemSimulation(SimulationSettings config) {
@@ -228,7 +250,7 @@ std::unique_ptr<ISimulation> createEcosystemSimulation(SimulationSettings config
 
     for (int i = 0; i < config.rabbitCount; ++i) {
         const auto pos = randomPosition(config.gridWidth, config.gridHeight);
-        sim->spawnEntity(EntityType::Herbivore, SPECIES_RABBIT, pos.x, pos.y);
+        sim->spawnEntity(EntityType::Herbivore, SPECIES_RABBIT, pos.x, pos.y, randomGender());
     }
 
     sim->registerSpecies(
@@ -238,7 +260,7 @@ std::unique_ptr<ISimulation> createEcosystemSimulation(SimulationSettings config
 
     for (int i = 0; i < config.wolfCount; ++i) {
         const auto pos = randomPosition(config.gridWidth, config.gridHeight);
-        sim->spawnEntity(EntityType::Carnivore, SPECIES_WOLF, pos.x, pos.y);
+        sim->spawnEntity(EntityType::Carnivore, SPECIES_WOLF, pos.x, pos.y, randomGender());
     }
 
     return sim;

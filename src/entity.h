@@ -8,6 +8,12 @@ enum class EntityType : int {
     Carnivore = 3,
 };
 
+enum class Gender : int {
+    None = 0,
+    Female = 1,
+    Male = 2,
+};
+
 struct EntityData {
     int x, y;
     EntityType type;
@@ -15,6 +21,7 @@ struct EntityData {
     float energy;
     int age;
     int reproductionCooldown;
+    Gender gender;
 };
 
 #endif //ECOSYSTEM_ENTITY_H
