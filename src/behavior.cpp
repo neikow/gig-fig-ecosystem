@@ -4,6 +4,7 @@
 #include <memory>
 #include <ostream>
 #include <random>
+#include <algorithm>
 
 #include <vector>
 #include "entity.h"
@@ -169,7 +170,7 @@ class HerbivoreBehavior final : public IBehavior {
         if (entity.energy <= 0.0f || entity.energy >= traits.feedingThreshold) return false;
         if (entities[cell.plantIndex].energy <= 0.0f) return false;
 
-        entity.energy = std::ranges::clamp(entity.energy + entities[cell.plantIndex].energy, 0.0f, traits.maxEnergy);
+        entity.energy = std::clamp(entity.energy + entities[cell.plantIndex].energy, 0.0f, traits.maxEnergy);
         entities[cell.plantIndex].energy = 0.0f;
 
         return true;
@@ -437,7 +438,7 @@ class CarnivoreBehavior final : public IBehavior {
                 // For the time being, allow to eat any other animal species;
                 && entities[targetCell.animalIndex].speciesId != entity.speciesId
             ) {
-                entity.energy = std::ranges::clamp(
+                entity.energy = std::clamp(
                     entity.energy + entities[targetCell.animalIndex].energy,
                     0.0f,
                     traits.maxEnergy

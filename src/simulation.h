@@ -1,6 +1,7 @@
 #ifndef ECOSYSTEM_SIMULATION_H
 #define ECOSYSTEM_SIMULATION_H
 #include <memory>
+#include <unordered_map>
 #include "entity.h"
 #include "species.h"
 
