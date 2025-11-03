@@ -121,7 +121,7 @@ class HerbivoreBehavior final : public IBehavior {
 
                     const GridCell &targetCell = grid[newY * gridWidth + newX];
                     if (targetCell.plantIndex != -1) {
-                        const float distance = dx * dx + dy + dy;
+                        const float distance = dx * dx + dy * dy;
                         const float score = 1.0f / (distance + 0.1f);
 
                         if (score > bestScore) {
@@ -378,7 +378,7 @@ class CarnivoreBehavior final : public IBehavior {
 
                 const GridCell &targetCell = grid[newY * gridWidth + newX];
                 if (targetCell.animalIndex != -1 && entities[targetCell.animalIndex].speciesId != entity.speciesId) {
-                    const float distance = dx * dx + dy + dy;
+                    const float distance = dx * dx + dy * dy;
                     const float score = 1.0f / (distance + 0.1f);
 
                     if (score > bestScore) {
