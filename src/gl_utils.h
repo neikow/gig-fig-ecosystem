@@ -34,7 +34,7 @@ void destroyCenteredQuadResources(CenteredQuad &q);
 
 bool initGLFW();
 
-GLFWwindow *createWindow(int w = 1920, int h = 1080, const char *title = "EcoSystems");
+GLFWwindow *createWindow(int w = 1920, int h = 1080, const char *title = "EcoSystem");
 
 bool initGlad();
 
